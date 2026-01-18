@@ -28,7 +28,7 @@ TOKEN_URL = "https://open.larksuite.com/open-apis/authen/v2/oauth/token"
 LARK_API_BASE = "https://open.larksuite.com/open-apis"
 
 # スコープ（全機能対応）
-SCOPES = "auth:user.id:read offline_access task:task:read task:task:write task:tasklist:read task:tasklist:write im:message im:chat im:chat:readonly docx:document docx:document:readonly bitable:app bitable:app:readonly drive:drive drive:drive:readonly drive:file drive:file:readonly wiki:wiki wiki:wiki:readonly wiki:space:read wiki:space:retrieve wiki:node:read wiki:node:retrieve contact:contact.base:readonly contact:user.base:readonly contact:department.base:readonly contact:user.employee_id:readonly"
+SCOPES = "auth:user.id:read offline_access task:task:read task:task:write task:tasklist:read task:tasklist:write im:message im:message.group_msg im:message.group_at_msg:readonly im:chat im:chat:readonly docx:document docx:document:readonly bitable:app bitable:app:readonly drive:drive drive:drive:readonly drive:file drive:file:readonly wiki:wiki wiki:wiki:readonly wiki:space:read wiki:space:retrieve wiki:node:read wiki:node:retrieve contact:contact.base:readonly contact:user.base:readonly contact:department.base:readonly contact:user.employee_id:readonly"
 
 # トークンストア（本番環境ではRedis等を推奨）
 # スレッドセーフにするためのロック
