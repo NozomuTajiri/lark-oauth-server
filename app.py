@@ -618,6 +618,118 @@ def api_lark_proxy(endpoint):
     except Exception as e:
         return jsonify({'error': 'APIError', 'message': str(e)}), 500
 
+@app.route('/api/send_message/<chat_id>', methods=['POST'])
+def api_send_message(chat_id):
+    """
+    チャットにメッセージを送信するAPI
+    ボットが参加しているグループにメッセージを送信
+    
+    Request body:
+    {
+        "text": "送信するテキスト"
+    }
+    """
+    if not verify_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Tenant Access Tokenを使用（ボットとしてメッセージ送信）
+    access_token, error = get_tenant_access_token()
+    if error:
+        return jsonify({'error': 'TokenError', 'message': error}), 401
+    
+    data = request.json or {}
+    text = data.get('text', '')
+    
+    if not text:
+        return jsonify({'error': 'ValidationError', 'message': 'text is required'}), 400
+    
+    try:
+        response = requests.post(
+            f"{LARK_API_BASE}/im/v1/messages",
+            headers={
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            },
+            params={'receive_id_type': 'chat_id'},
+            json={
+                'receive_id': chat_id,
+                'msg_type': 'text',
+                'content': json.dumps({'text': text})
+            }
+        )
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': 'APIError', 'message': str(e)}), 500
+
+@app.route('/api/reply_message/<message_id>', methods=['POST'])
+def api_reply_message(message_id):
+    """
+    特定のメッセージに返信するAPI
+    
+    Request body:
+    {
+        "text": "返信するテキスト"
+    }
+    """
+    if not verify_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Tenant Access Tokenを使用（ボットとしてメッセージ送信）
+    access_token, error = get_tenant_access_token()
+    if error:
+        return jsonify({'error': 'TokenError', 'message': error}), 401
+    
+    data = request.json or {}
+    text = data.get('text', '')
+    
+    if not text:
+        return jsonify({'error': 'ValidationError', 'message': 'text is required'}), 400
+    
+    try:
+        response = requests.post(
+            f"{LARK_API_BASE}/im/v1/messages/{message_id}/reply",
+            headers={
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'msg_type': 'text',
+                'content': json.dumps({'text': text})
+            }
+        )
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': 'APIError', 'message': str(e)}), 500
+
+@app.route('/api/bot_chats', methods=['GET'])
+def api_get_bot_chats():
+    """
+    ボットが参加しているチャット一覧を取得
+    """
+    if not verify_api_key():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    access_token, error = get_tenant_access_token()
+    if error:
+        return jsonify({'error': 'TokenError', 'message': error}), 401
+    
+    page_size = request.args.get('page_size', '50')
+    page_token = request.args.get('page_token', '')
+    
+    try:
+        params = {'page_size': page_size}
+        if page_token:
+            params['page_token'] = page_token
+            
+        response = requests.get(
+            f"{LARK_API_BASE}/im/v1/chats",
+            headers={'Authorization': f'Bearer {access_token}'},
+            params=params
+        )
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': 'APIError', 'message': str(e)}), 500
+
 @app.route('/health')
 def health():
     """ヘルスチェック"""
