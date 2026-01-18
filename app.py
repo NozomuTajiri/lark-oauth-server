@@ -21,8 +21,14 @@ BASE_URL = os.environ.get('BASE_URL', '')  # デプロイ後に設定
 AUTH_URL = "https://accounts.larksuite.com/open-apis/authen/v1/authorize"
 TOKEN_URL = "https://open.larksuite.com/open-apis/authen/v2/oauth/token"
 
-# スコープ（offline_accessが必要）
-SCOPES = "offline_access task:task:read"
+# スコープ（全機能対応）
+# - offline_access: Refresh Token取得用
+# - task: タスク確認・作成・更新
+# - im: メッセージ送信・読み取り
+# - docx/drive/wiki: ドキュメント編集
+# - bitable: ベース編集
+# - contact: ユーザー情報取得
+SCOPES = "offline_access task:task:read task:task:write im:message im:message:read im:chat docx:document drive:drive wiki:wiki bitable:app contact:user.base:readonly"
 
 # 状態管理（本番環境ではRedisなどを使用推奨）
 state_store = {}
@@ -102,10 +108,13 @@ INDEX_HTML = """
         
         <div class="description">
             <strong>このページについて：</strong><br>
-            ManusがLarkのタスクにアクセスするための認証を行います。<br><br>
+            ManusがLarkの各機能にアクセスするための認証を行います。<br><br>
             <strong>取得する権限：</strong><br>
-            • タスクの読み取り（task:task:read）<br>
-            • オフラインアクセス（offline_access）
+            • タスク確認・作成・更新<br>
+            • メッセージ送信・読み取り<br>
+            • ドキュメント編集<br>
+            • ベース編集<br>
+            • オフラインアクセス
         </div>
         
         <a href="{{ auth_url }}" class="button">Larkでログイン</a>
