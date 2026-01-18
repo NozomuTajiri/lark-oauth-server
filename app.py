@@ -28,7 +28,7 @@ TOKEN_URL = "https://open.larksuite.com/open-apis/authen/v2/oauth/token"
 # - docx/drive/wiki: ドキュメント編集
 # - bitable: ベース編集
 # - contact: ユーザー情報取得
-SCOPES = "offline_access task:task:read task:task:write im:message im:message:read im:chat docx:document drive:drive wiki:wiki bitable:app contact:user.base:readonly"
+SCOPES = "offline_access task:task:read task:task:write im:message im:message:readonly im:chat docx:document drive:drive wiki:wiki bitable:app contact:user.base:readonly"
 
 # 状態管理（本番環境ではRedisなどを使用推奨）
 state_store = {}
