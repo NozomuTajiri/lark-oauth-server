@@ -39,6 +39,13 @@ token_store = {
     'access_token_expires_at': 0,
     'updated_at': ''
 }
+
+# Tenant Access Token用ストア
+tenant_token_store = {
+    'access_token': '',
+    'expires_at': 0
+}
+
 state_store = {}
 
 # ========================================
@@ -327,6 +334,39 @@ def get_valid_access_token():
     # 更新が必要
     return refresh_access_token()
 
+def get_tenant_access_token():
+    """
+    Tenant Access Tokenを取得（アプリ認証）
+    ボットが参加しているグループのメッセージ取得に必要
+    """
+    global tenant_token_store
+    
+    with token_lock:
+        # 現在のトークンが有効か確認（5分のマージン）
+        if tenant_token_store.get('access_token') and tenant_token_store.get('expires_at', 0) > datetime.now().timestamp() + 300:
+            return tenant_token_store['access_token'], None
+    
+    try:
+        response = requests.post(
+            f"{LARK_API_BASE}/auth/v3/tenant_access_token/internal",
+            headers={"Content-Type": "application/json"},
+            json={
+                "app_id": APP_ID,
+                "app_secret": APP_SECRET
+            }
+        )
+        result = response.json()
+        
+        if result.get('code') == 0:
+            with token_lock:
+                tenant_token_store['access_token'] = result['tenant_access_token']
+                tenant_token_store['expires_at'] = datetime.now().timestamp() + result.get('expire', 7200)
+            return result['tenant_access_token'], None
+        else:
+            return None, f"Tenant Token取得失敗: {result.get('msg', str(result))}"
+    except Exception as e:
+        return None, f"Tenant Token取得エラー: {str(e)}"
+
 def verify_api_key():
     """APIキーを検証"""
     auth_header = request.headers.get('Authorization', '')
@@ -515,13 +555,17 @@ def api_get_chats():
 
 @app.route('/api/messages/<chat_id>', methods=['GET'])
 def api_get_messages(chat_id):
-    """特定チャットのメッセージを取得するAPI"""
+    """
+    特定チャットのメッセージを取得するAPI
+    ボットが参加しているグループのメッセージを取得するため、Tenant Access Tokenを使用
+    """
     if not verify_api_key():
         return jsonify({'error': 'Unauthorized'}), 401
     
-    access_token, error = get_valid_access_token()
+    # Tenant Access Tokenを使用（ボットが参加しているグループのメッセージ取得に必要）
+    access_token, error = get_tenant_access_token()
     if error:
-        return jsonify({'error': 'TokenError', 'message': error, 'need_reauth': True}), 401
+        return jsonify({'error': 'TokenError', 'message': error}), 401
     
     page_size = request.args.get('page_size', '50')
     
